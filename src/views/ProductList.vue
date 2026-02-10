@@ -116,7 +116,8 @@ const handleSearch = () => {
 }
 
 const goToDetail = (id) => {
-  console.log('查看商品ID:', id)
+  // 跳转到详情页
+  router.push(`/product/${id}`)
 }
 
 const logout = () => {
