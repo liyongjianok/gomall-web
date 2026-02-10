@@ -19,7 +19,7 @@
         
         <div class="user-info">
           <el-button 
-            icon="ShoppingCart" 
+            :icon="ShoppingCart" 
             circle 
             size="large"
             style="margin-right: 15px; font-size: 18px;" 
@@ -33,7 +33,6 @@
 
     <div class="main-wrapper">
       <div class="goods-area" v-loading="loading">
-        
         <el-empty v-if="productList.length === 0 && !loading" description="暂无商品" />
         
         <div class="strict-grid" v-if="productList.length > 0">
@@ -86,8 +85,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getProductList } from '../api/product'
-// 引入图标
-import { ShoppingCart } from '@element-plus/icons-vue'
+import { ShoppingCart } from '@element-plus/icons-vue' // 确保引入了
 
 const router = useRouter()
 const loading = ref(false)
@@ -140,78 +138,19 @@ onMounted(() => {
 </script>
 
 <style>
-/* 强制显示滚动条 */
-html {
-  overflow-y: scroll; 
-}
+html { overflow-y: scroll; }
 </style>
 
 <style scoped>
-.page-container {
-  min-height: 100vh;
-  background-color: #f5f7fa;
-  display: flex;
-  flex-direction: column;
-  margin: 0; padding: 0;
-}
-
-/* Header */
-.header-wrapper {
-  position: sticky;
-  top: 0;
-  z-index: 999;
-  background-color: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  width: 100%;
-}
-.header-content {
-  width: 1200px;
-  margin: 0 auto;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+.page-container { min-height: 100vh; background-color: #f5f7fa; display: flex; flex-direction: column; margin: 0; padding: 0; }
+.header-wrapper { position: sticky; top: 0; z-index: 999; background-color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.05); width: 100%; }
+.header-content { width: 1200px; margin: 0 auto; height: 60px; display: flex; align-items: center; justify-content: space-between; }
 .logo { margin: 0; font-size: 20px; color: #409EFF; font-weight: bold; }
 .search-box { width: 400px; }
-
-/* Main */
-.main-wrapper {
-  width: 1200px;
-  margin: 20px auto;
-  flex: 1;
-}
-
-/* Grid */
-.strict-grid {
-  display: grid;
-  width: 100%;
-  gap: 20px;
-  grid-template-columns: repeat(4, 1fr);
-  justify-content: start;
-}
-
-/* 适配 */
-@media (max-width: 1220px) {
-  .header-content, .main-wrapper {
-    width: 100%;
-    padding: 0 20px;
-    box-sizing: border-box;
-  }
-  .strict-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  }
-}
-
-/* Card */
-.goods-card {
-  width: 100%;
-  height: 380px;
-  border-radius: 8px;
-  transition: transform 0.3s;
-  display: flex;
-  flex-direction: column;
-}
+.main-wrapper { width: 1200px; margin: 20px auto; flex: 1; }
+.strict-grid { display: grid; width: 100%; gap: 20px; grid-template-columns: repeat(4, 1fr); justify-content: start; }
+@media (max-width: 1220px) { .header-content, .main-wrapper { width: 100%; padding: 0 20px; box-sizing: border-box; } .strict-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); } }
+.goods-card { width: 100%; height: 380px; border-radius: 8px; transition: transform 0.3s; display: flex; flex-direction: column; }
 .goods-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
 :deep(.el-card__body) { padding: 0; display: flex; flex-direction: column; height: 100%; width: 100%; }
 .goods-img-box { width: 100%; height: 200px; flex-shrink: 0; overflow: hidden; background: #fff; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid #f0f0f0; }

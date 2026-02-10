@@ -8,11 +8,11 @@ export function getAddressList() {
     })
 }
 
-// 新增地址 (简单实现，方便测试)
+// 新增地址
 export function addAddress(data) {
     return request({
         url: '/address/add',
         method: 'post',
-        data
+        data // { name, mobile, province, city, district, detail_address }
     })
 }

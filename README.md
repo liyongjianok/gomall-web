@@ -1,35 +1,47 @@
 
-# 🛍️ Go Ecommerce UI (电商前端系统)
+# Go Mall - 电商平台前端 (Web)
 
-基于 **Vue 3 + Vite + Element Plus** 构建的现代化电商后台/前台管理系统。
-本项目是 Go 微服务电商系统的配套前端，负责展示商品、用户登录、购物车及订单管理等功能。
+这是一个基于 **Vue 3 + Vite + Element Plus** 构建的现代化 B2C 电商前台系统，作为 **Go 微服务架构**的前端展示层。
 
-## 🚀 技术栈 (Tech Stack)
+## 🛠 技术栈 (Tech Stack)
 
-| 类别                 | 技术         | 说明                          |
-| :------------------- | :----------- | :---------------------------- |
-| **核心框架**   | Vue 3        | 组合式 API (Composition API)  |
-| **构建工具**   | Vite         | 极速启动与打包                |
-| **UI 组件库**  | Element Plus | 饿了么团队出品的 Vue 3 组件库 |
-| **路由管理**   | Vue Router 4 | 页面路由跳转                  |
-| **网络请求**   | Axios        | 封装拦截器，统一处理 Token    |
-| **CSS 预处理** | CSS / SCSS   | 样式编写                      |
+* **核心框架** : [Vue 3](https://vuejs.org/) (使用 Composition API + `<script setup>`)
+* **构建工具** : [Vite](https://vitejs.dev/) (秒级热更新)
+* **UI 组件库** : [Element Plus](https://element-plus.org/)
+* **路由管理** : [Vue Router 4](https://router.vuejs.org/)
+* **HTTP 请求** : [Axios](https://axios-http.com/) (二次封装，统一拦截器)
+* **图标库** : @element-plus/icons-vue
 
-## 📂 目录结构 (Directory Structure)
+## ✨ 核心功能 (Features)
 
-```bash
-go-ecommerce-ui/
-├── public/              # 静态资源
-├── src/
-│   ├── api/             # API 接口统一管理 (product.js, user.js)
-│   ├── assets/          # 图片、字体等静态资源
-│   ├── components/      # 公共组件
-│   ├── router/          # 路由配置 (index.js)
-│   ├── utils/           # 工具库 (request.js - Axios封装)
-│   ├── views/           # 页面文件 (Login.vue, ProductList.vue)
-│   ├── App.vue          # 根组件
-│   └── main.js          # 入口文件
-├── vite.config.js       # Vite 配置 (跨域代理)
-├── package.json         # 依赖管理
-└── README.md            # 项目说明
-```
+### 1. 用户模块
+
+* **用户登录** : 对接后端 API 网关，基于 JWT Token 鉴权。
+* **状态管理** : Token 自动存储与过期处理。
+
+### 2. 商品浏览
+
+* **商品列表** : 响应式 Grid 布局（大屏 4 列，小屏自动适配），支持固定宽度居中显示。
+* **商品搜索** : 顶部搜索栏，对接 Elasticsearch 搜索服务。
+* **分页加载** : 支持自定义每页数量。
+* **商品详情** : 包含商品大图、价格展示、库存状态、SKU 信息。
+
+### 3. 购物车 (Cart)
+
+* **加购功能** : 支持在详情页选择数量加入购物车。
+* **列表管理** :
+* 显示商品缩略图、名称、单价。
+* **数量调整** : 使用步进器修改购买数量。
+* **删除商品** : 支持从购物车移除单个商品。
+* **结算逻辑** :
+* 支持 **多选/反选** 商品进行结算。
+* 实时计算选中商品的总金额。
+
+### 4. 交易下单 (Order)
+
+* **确认订单** : 弹出层式结算页。
+* **地址管理** :
+* 展示收货地址列表。
+* 支持 **新增测试地址** (Mock 数据快速添加)。
+* 默认选中第一个可用地址。
+* **下单支付** : 创建订单并返回订单号，模拟支付流程。

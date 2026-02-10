@@ -9,10 +9,19 @@ export function addToCart(data) {
     })
 }
 
-// 获取购物车列表 (稍后开发购物车页面会用到)
+// 获取购物车列表 
 export function getCartList() {
     return request({
         url: '/cart/list',
         method: 'get'
+    })
+}
+
+// 新增：删除购物车商品 
+export function deleteCartItem(data) {
+    return request({
+        url: '/cart/delete',
+        method: 'post',
+        data // { sku_id: 123 }
     })
 }
