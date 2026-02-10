@@ -16,7 +16,16 @@
             </template>
           </el-input>
         </div>
+        
         <div class="user-info">
+          <el-button 
+            icon="ShoppingCart" 
+            circle 
+            size="large"
+            style="margin-right: 15px; font-size: 18px;" 
+            @click="$router.push('/cart')"
+          />
+          
           <el-button type="info" link @click="logout">退出</el-button>
         </div>
       </div>
@@ -54,8 +63,7 @@
               </div>
             </div>
           </el-card>
-
-          </div>
+        </div>
       </div>
 
       <div class="pagination-container" v-if="total > 0">
@@ -78,6 +86,8 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getProductList } from '../api/product'
+// 引入图标
+import { ShoppingCart } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const loading = ref(false)
@@ -116,7 +126,6 @@ const handleSearch = () => {
 }
 
 const goToDetail = (id) => {
-  // 跳转到详情页
   router.push(`/product/${id}`)
 }
 
@@ -131,9 +140,7 @@ onMounted(() => {
 </script>
 
 <style>
-/* 🔥🔥🔥 终极补丁：强制显示滚动条 🔥🔥🔥 
-   防止搜索结果变少时，滚动条消失导致页面整体向右跳动
-*/
+/* 强制显示滚动条 */
 html {
   overflow-y: scroll; 
 }
@@ -145,12 +152,10 @@ html {
   background-color: #f5f7fa;
   display: flex;
   flex-direction: column;
-  /* 确保页面本身没有边距 */
-  margin: 0;
-  padding: 0;
+  margin: 0; padding: 0;
 }
 
-/* Header 区域 */
+/* Header */
 .header-wrapper {
   position: sticky;
   top: 0;
@@ -160,9 +165,8 @@ html {
   width: 100%;
 }
 .header-content {
-  /* 🔒 锁死宽度：1200px */
   width: 1200px;
-  margin: 0 auto; /* 居中 */
+  margin: 0 auto;
   height: 60px;
   display: flex;
   align-items: center;
@@ -171,44 +175,35 @@ html {
 .logo { margin: 0; font-size: 20px; color: #409EFF; font-weight: bold; }
 .search-box { width: 400px; }
 
-/* Main 区域 */
+/* Main */
 .main-wrapper {
-  /* 🔒 锁死宽度：1200px，必须和 Header 一致 */
   width: 1200px;
-  margin: 20px auto; /* 居中 */
+  margin: 20px auto;
   flex: 1;
 }
 
-/* Grid 布局 */
+/* Grid */
 .strict-grid {
   display: grid;
   width: 100%;
   gap: 20px;
-  
-  /* 🔒 锁死列数：强制 4 列
-     🔒 锁死宽度：每列占 1/4 (1fr)
-     不管里面有几个元素，格子永远是这么大，位置永远固定。
-  */
   grid-template-columns: repeat(4, 1fr);
-  
-  /* 确保从左开始排 */
   justify-content: start;
 }
 
-/* 适配小屏幕：如果不满1200px，则允许缩小，但保持居中 */
+/* 适配 */
 @media (max-width: 1220px) {
   .header-content, .main-wrapper {
     width: 100%;
     padding: 0 20px;
     box-sizing: border-box;
   }
-  /* 屏幕变小后，自动切换为 3 列或 2 列，防止卡片太窄 */
   .strict-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
 }
 
-/* 卡片内部样式 (保持不变) */
+/* Card */
 .goods-card {
   width: 100%;
   height: 380px;
@@ -217,76 +212,14 @@ html {
   display: flex;
   flex-direction: column;
 }
-.goods-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-}
-:deep(.el-card__body) {
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-}
-.goods-img-box {
-  width: 100%;
-  height: 200px;
-  flex-shrink: 0;
-  overflow: hidden;
-  background: #fff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-bottom: 1px solid #f0f0f0;
-}
-.goods-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.goods-info {
-  padding: 15px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: white;
-  overflow: hidden;
-}
-.goods-name {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.goods-desc {
-  color: #909399;
-  font-size: 13px;
-  margin: 0 0 15px 0;
-  line-height: 1.5;
-  height: 40px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-}
-.goods-bottom {
-  margin-top: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.price {
-  color: #f56c6c;
-  font-size: 18px;
-  font-weight: bold;
-}
-.pagination-container {
-  margin-top: 30px;
-  margin-bottom: 40px;
-  display: flex;
-  justify-content: center;
-}
+.goods-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+:deep(.el-card__body) { padding: 0; display: flex; flex-direction: column; height: 100%; width: 100%; }
+.goods-img-box { width: 100%; height: 200px; flex-shrink: 0; overflow: hidden; background: #fff; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid #f0f0f0; }
+.goods-img { width: 100%; height: 100%; object-fit: cover; }
+.goods-info { padding: 15px; flex: 1; display: flex; flex-direction: column; background: white; overflow: hidden; }
+.goods-name { margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #303133; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.goods-desc { color: #909399; font-size: 13px; margin: 0 0 15px 0; line-height: 1.5; height: 40px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.goods-bottom { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
+.price { color: #f56c6c; font-size: 18px; font-weight: bold; }
+.pagination-container { margin-top: 30px; margin-bottom: 40px; display: flex; justify-content: center; }
 </style>
