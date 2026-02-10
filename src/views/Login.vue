@@ -1,23 +1,56 @@
 <template>
-    <div class="login-container">
-      <el-card class="login-card">
-        <template #header>
-          <h2>Go 电商系统登录</h2>
-        </template>
+    <div class="login-wrapper">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+  
+      <div class="login-container">
+        <div class="login-left">
+          <h1>Go Ecommerce</h1>
+          <p>基于微服务的高性能电商后台管理系统</p>
+        </div>
         
-        <el-form :model="form" label-width="80px">
-          <el-form-item label="用户名">
-            <el-input v-model="form.username" placeholder="请输入用户名" />
-          </el-form-item>
-          <el-form-item label="密码">
-            <el-input v-model="form.password" type="password" placeholder="请输入密码" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="handleLogin" :loading="loading">登录</el-button>
-            <el-button @click="handleRegister">注册</el-button>
-          </el-form-item>
-        </el-form>
-      </el-card>
+        <el-card class="login-card" shadow="always">
+          <template #header>
+            <div class="card-header">
+              <span>欢迎登录</span>
+            </div>
+          </template>
+          
+          <el-form :model="form" size="large" class="login-form">
+            <el-form-item>
+              <el-input 
+                v-model="form.username" 
+                placeholder="请输入用户名" 
+                prefix-icon="User"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-input 
+                v-model="form.password" 
+                type="password" 
+                placeholder="请输入密码" 
+                prefix-icon="Lock"
+                show-password
+                @keyup.enter="handleLogin"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button 
+                type="primary" 
+                class="login-btn" 
+                @click="handleLogin" 
+                :loading="loading"
+              >
+                立即登录
+              </el-button>
+            </el-form-item>
+            <div class="login-options">
+               <el-link type="info" :underline="false">忘记密码？</el-link>
+               <el-link type="primary" :underline="false" @click="handleRegister">注册账号</el-link>
+            </div>
+          </el-form>
+        </el-card>
+      </div>
     </div>
   </template>
   
@@ -26,39 +59,29 @@
   import axios from 'axios'
   import { useRouter } from 'vue-router'
   import { ElMessage } from 'element-plus'
+  import { User, Lock } from '@element-plus/icons-vue' // 需要引入图标
   
   const router = useRouter()
   const loading = ref(false)
   
-  // 表单数据
   const form = reactive({
-    username: 'shouguang_03', // 默认填好，方便测试
-    password: '123456'
+    username: 'shouguang_03', 
+    password: '123'
   })
   
-  // 登录逻辑
   const handleLogin = async () => {
     if(!form.username || !form.password) {
       ElMessage.warning('请输入用户名和密码')
       return
     }
-  
     loading.value = true
     try {
-      // 发送请求给 Go 网关
-      // 注意：因为配置了 vite proxy，这里直接写 /api 开头即可
       const res = await axios.post('/api/v1/user/login', form)
-      
-      // 检查后端返回的 code
       if (res.data.code === 200) {
         ElMessage.success('登录成功')
-        
-        // 关键：把 Token 存到浏览器本地
         localStorage.setItem('token', res.data.data.token)
         localStorage.setItem('userId', res.data.data.id)
-        
-        // 跳转到首页
-        router.push('/home')
+        router.push('/products')
       } else {
         ElMessage.error(res.data.msg || '登录失败')
       }
@@ -76,14 +99,104 @@
   </script>
   
   <style scoped>
-  .login-container {
+  .login-wrapper {
+    height: 100vh;
+    width: 100vw;
+    /* 漂亮的渐变背景 */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    background-color: #f0f2f5;
+    position: relative;
+    overflow: hidden;
   }
-  .login-card {
+  
+  /* 装饰背景球 */
+  .shape {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+  }
+  .shape-1 {
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.3);
+    top: -50px;
+    left: -50px;
+  }
+  .shape-2 {
     width: 400px;
+    height: 400px;
+    background: rgba(255, 255, 255, 0.2);
+    bottom: -100px;
+    right: -100px;
+  }
+  
+  .login-container {
+    display: flex;
+    width: 900px;
+    height: 500px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px); /* 毛玻璃效果 */
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    z-index: 1;
+    overflow: hidden;
+  }
+  
+  .login-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px;
+    color: white;
+    background: rgba(0,0,0,0.2);
+  }
+  .login-left h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
+  
+  .login-card {
+    width: 450px;
+    border: none;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  /* 去掉 Element Card 默认边框，融合更好 */
+  :deep(.el-card) {
+    border: none;
+    background: white;
+  }
+  :deep(.el-card__header) {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  
+  .card-header {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .login-form {
+    padding: 0 20px;
+  }
+  
+  .login-btn {
+    width: 100%;
+    font-size: 16px;
+    padding: 20px 0;
+  }
+  
+  .login-options {
+    display: flex;
+    justify-content: space-between;
   }
   </style>
