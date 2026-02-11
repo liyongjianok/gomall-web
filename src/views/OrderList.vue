@@ -25,8 +25,8 @@
           <div class="o-footer">
             <div class="total">总计: ¥ {{ order.total_amount }}</div>
             <div class="btns">
-              <el-button v-if="order.status === 0" type="primary" @click="handlePay(order)">立即支付</el-button>
-              <el-button v-if="order.status === 0" @click="handleCancel(order)">取消</el-button>
+              <el-button v-if="order.status === 0 || order.status === undefined" type="primary" @click="handlePay(order)">立即支付</el-button>
+              <el-button v-if="order.status === 0 || order.status === undefined" @click="handleCancel(order)">取消</el-button>
             </div>
           </div>
         </el-card>
@@ -50,16 +50,19 @@
   }
   
   const getStatusText = (s) => {
-    if (s === 0) return '待支付'
-    if (s === 1) return '已支付'
-    if (s === 2) return '已取消'
-    return '未知'
-  }
-  
+    const status = (s === undefined || s === null) ? 0 : Number(s)
+    if (status === 0) return '待支付'
+    if (status === 1) return '已支付'
+    if (status === 2) return '已取消'
+    return '未知状态'
+  }  
+
   const getStatusType = (s) => {
-    if (s === 0) return 'warning'
-    if (s === 1) return 'success'
-    return 'info'
+    const status = (s === undefined || s === null) ? 0 : Number(s)
+    if (status === 0) return 'warning' // 黄色
+    if (status === 1) return 'success' // 绿色
+    if (status === 2) return 'info'    // 灰色
+    return 'danger'
   }
   
   const handlePay = async (order) => {
