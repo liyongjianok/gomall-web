@@ -6,6 +6,8 @@ const Home = () => import('../views/Home.vue')
 const ProductList = () => import('../views/ProductList.vue')
 const ProductDetail = () => import('../views/ProductDetail.vue')
 const Cart = () => import('../views/Cart.vue')
+const OrderList = () => import('../views/OrderList.vue')
+const UserCenter = () => import('../views/UserCenter.vue')
 
 const routes = [
     { path: '/', redirect: '/login' }, // 默认跳登录
@@ -14,7 +16,8 @@ const routes = [
     { path: '/products', component: ProductList },
     { path: '/product/:id', component: ProductDetail },
     { path: '/cart', component: Cart },
-    { path: '/orders', component: () => import('../views/OrderList.vue') }
+    { path: '/orders', component: OrderList },
+    { path: '/user', component: UserCenter }
 ]
 
 const router = createRouter({
