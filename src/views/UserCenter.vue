@@ -95,7 +95,7 @@
             <h3 class="panel-title">账号安全</h3>
             <div class="security-item">
               <span>登录密码</span>
-              <el-button link>修改密码 (暂未开放)</el-button>
+              <el-button type="primary" link @click="showPwdDialog = true">修改密码</el-button>
             </div>
             <div class="logout-area">
               <el-button type="danger" plain @click="logout" style="width: 200px;">退出登录</el-button>
@@ -125,6 +125,21 @@
           <el-button @click="showAvatarDialog = false">取消</el-button>
           <el-button type="primary" @click="confirmAvatar">确定</el-button>
         </span>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="showPwdDialog" title="修改密码" width="400px">
+      <el-form :model="pwdForm" label-width="80px">
+        <el-form-item label="旧密码">
+          <el-input v-model="pwdForm.old_password" type="password" show-password></el-input>
+        </el-form-item>
+        <el-form-item label="新密码">
+          <el-input v-model="pwdForm.new_password" type="password" show-password></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showPwdDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleUpdatePwd">确认修改</el-button>
       </template>
     </el-dialog>
 
@@ -268,6 +283,30 @@ const openAddressDialog = (type, row) => {
     Object.assign(addressForm, { id:0, name:'', mobile:'', province:'', city:'', district:'', detail_address:'' })
   } else {
     Object.assign(addressForm, row)
+  }
+}
+
+const showPwdDialog = ref(false)
+const pwdForm = reactive({
+  old_password: '',
+  new_password: ''
+})
+
+// 修改密码
+const handleUpdatePwd = async () => {
+  if (!pwdForm.old_password || !pwdForm.new_password) {
+    return ElMessage.warning('请输入密码')
+  }
+  try {
+    const res = await request.post('/user/password', pwdForm)
+    if (res.code === 200) {
+      ElMessage.success('密码修改成功，请重新登录')
+      logout() // 强制下线
+    } else {
+      ElMessage.error(res.msg || '修改失败')
+    }
+  } catch (e) {
+    ElMessage.error('服务异常')
   }
 }
 
