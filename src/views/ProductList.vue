@@ -29,7 +29,7 @@
           
           <el-dropdown @command="handleUserCommand" trigger="click">
             <div class="user-dropdown-link">
-              <el-avatar :size="36" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
+              <el-avatar :size="36" :src="userAvatar || defaultAvatar" />
               <span class="username">我的账户</span>
               <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </div>
@@ -101,11 +101,16 @@ import { useRouter } from 'vue-router'
 import { getProductList } from '../api/product'
 import { ShoppingCart, ArrowDown } from '@element-plus/icons-vue' 
 import { ElMessage } from 'element-plus'
+import request from '../utils/request'
 
 const router = useRouter()
 const loading = ref(false)
 const productList = ref([])
 const total = ref(0)
+
+// 头像相关变量
+const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+const userAvatar = ref('')
 
 const queryParams = reactive({
   page: 1,
@@ -143,7 +148,7 @@ const goToDetail = (id) => {
   router.push(`/product/${id}`)
 }
 
-// 处理用户菜单点击 (核心新增逻辑)
+// 处理用户菜单点击 
 const handleUserCommand = (command) => {
   if (command === 'logout') {
     localStorage.removeItem('token')
@@ -157,8 +162,24 @@ const handleUserCommand = (command) => {
   }
 }
 
+// 获取用户信息（头像）
+const loadUserInfo = async () => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    try {
+      const res = await request.get('/user/info')
+      if (res.code === 200 && res.data) {
+        userAvatar.value = res.data.avatar
+      }
+    } catch (e) {
+      console.error('获取用户信息失败', e)
+    }
+  }
+}
+
 onMounted(() => {
   getList()
+  loadUserInfo() // 挂载时加载头像
 })
 </script>
 

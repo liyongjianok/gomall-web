@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="header-wrapper">
       <div class="header-content">
-        <h2 class="logo" @click="$router.push('/products')">Go Mall</h2>
+        <h2 class="logo" @click="$router.push('/products')" style="cursor: pointer">Go Mall</h2>
         <div class="header-actions">
            <el-button link @click="$router.push('/products')">返回商城首页</el-button>
         </div>
@@ -39,7 +39,19 @@
               <el-form-item label="头像">
                 <div class="avatar-edit">
                   <el-avatar :size="80" :src="userInfo.avatar || defaultAvatar"></el-avatar>
-                  <el-button type="primary" link @click="showAvatarDialog = true" style="margin-left: 15px;">更换头像</el-button>
+                  
+                  <div style="margin-left: 20px; display: flex; flex-direction: column; gap: 10px;">
+                    <el-button type="primary" size="small" @click="triggerUpload">上传本地图片</el-button>
+                    <el-button link type="info" size="small" @click="showAvatarDialog = true">选择预设头像</el-button>
+                  </div>
+                  
+                  <input 
+                    type="file" 
+                    ref="fileInput" 
+                    style="display: none" 
+                    accept="image/*"
+                    @change="handleFileChange"
+                  />
                 </div>
               </el-form-item>
 
@@ -180,13 +192,14 @@ import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, Location, Lock } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import request from '../utils/request' // User相关接口暂时直接用request
+import request from '../utils/request' 
 import { getAddressList, createAddress, updateAddress, deleteAddress } from '../api/address'
 
 const router = useRouter()
 const activeMenu = ref('profile')
 const loading = ref(false)
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+const fileInput = ref(null)
 
 // 用户信息
 const userInfo = reactive({
@@ -222,6 +235,12 @@ const addressForm = reactive({
   is_default: false
 })
 
+const showPwdDialog = ref(false)
+const pwdForm = reactive({
+  old_password: '',
+  new_password: ''
+})
+
 // 加载用户信息
 const loadUserProfile = async () => {
   const res = await request.get('/user/info')
@@ -248,6 +267,33 @@ const handleMenuSelect = (index) => {
   }
 }
 
+// 触发文件上传
+const triggerUpload = () => {
+  fileInput.value.click()
+}
+
+// 处理文件选择 (转 Base64)
+const handleFileChange = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+
+  // 限制 2MB
+  if (file.size > 2 * 1024 * 1024) {
+    ElMessage.warning('图片大小不能超过 2MB')
+    return
+  }
+
+  const reader = new FileReader()
+  reader.readAsDataURL(file)
+  reader.onload = () => {
+    userInfo.avatar = reader.result // 预览并赋值
+    ElMessage.success('图片读取成功，请点击“保存修改”')
+  }
+  reader.onerror = () => {
+    ElMessage.error('图片读取失败')
+  }
+}
+
 // 更新个人资料
 const handleUpdateProfile = async () => {
   loading.value = true
@@ -267,7 +313,7 @@ const handleUpdateProfile = async () => {
   }
 }
 
-// 确认头像选择
+// 确认头像选择 (预设)
 const confirmAvatar = () => {
   if (tempAvatar.value) {
     userInfo.avatar = tempAvatar.value
@@ -285,12 +331,6 @@ const openAddressDialog = (type, row) => {
     Object.assign(addressForm, row)
   }
 }
-
-const showPwdDialog = ref(false)
-const pwdForm = reactive({
-  old_password: '',
-  new_password: ''
-})
 
 // 修改密码
 const handleUpdatePwd = async () => {
@@ -377,6 +417,9 @@ onMounted(() => {
 .content-area { flex: 1; background: #fff; border-radius: 8px; padding: 30px; min-height: 500px; }
 .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .panel-title { margin: 0; font-size: 20px; color: #303133; border-left: 4px solid #409EFF; padding-left: 10px; }
+
+/* 头像编辑 */
+.avatar-edit { display: flex; align-items: center; }
 
 /* 头像选择 */
 .avatar-grid { display: flex; gap: 15px; flex-wrap: wrap; }
