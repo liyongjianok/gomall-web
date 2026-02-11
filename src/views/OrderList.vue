@@ -27,7 +27,7 @@
           
           <el-dropdown @command="handleUserCommand">
             <div class="user-dropdown-link">
-              <el-avatar :size="36" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
+              <el-avatar :size="36" :src="userAvatar || defaultAvatar" />
               <span class="username">我的账户</span>
               <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </div>
@@ -124,6 +124,8 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getOrderList } from '../api/order'
 import { payOrder } from '../api/payment'
+// 🔥 引入 request 获取用户信息
+import request from '../utils/request'
 import { ShoppingCart, ArrowDown } from '@element-plus/icons-vue' 
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -131,6 +133,10 @@ const router = useRouter()
 const list = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
+
+// 🔥 头像相关变量
+const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+const userAvatar = ref('')
 
 // 判断是否为待支付 (兼容 undefined/null)
 const isUnpaid = (status) => {
@@ -149,6 +155,21 @@ const loadData = async () => {
     ElMessage.error('加载订单失败')
   } finally {
     loading.value = false
+  }
+}
+
+// 🔥 获取用户信息（同步头像）
+const loadUserInfo = async () => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    try {
+      const res = await request.get('/user/info')
+      if (res.code === 200 && res.data) {
+        userAvatar.value = res.data.avatar
+      }
+    } catch (e) {
+      console.error('获取用户信息失败', e)
+    }
   }
 }
 
@@ -209,7 +230,10 @@ const handleUserCommand = (command) => {
   }
 }
 
-onMounted(loadData)
+onMounted(() => {
+  loadData()
+  loadUserInfo() // 🔥 加载头像
+})
 </script>
 
 <style>
