@@ -65,9 +65,9 @@
             </div>
             
             <div class="goods-info">
-              <h3 class="goods-name" :title="item.name" @click="goToDetail(item.id)">{{ item.name }}</h3>
-              <p class="goods-desc" :title="item.description">{{ item.description }}</p>
-              
+              <h3 class="goods-name" :title="item.name" @click="goToDetail(item.id)" v-html="item.name"></h3>
+              <p class="goods-desc" :title="item.description" v-html="item.description"></p>
+                        
               <div class="goods-bottom">
                 <span class="price">¥ {{ item.price }}</span>
                 <el-button type="primary" size="small" @click="goToDetail(item.id)">
