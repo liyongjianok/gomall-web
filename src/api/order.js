@@ -5,7 +5,7 @@ export function createOrder(data) {
     return request({
         url: '/order/create',
         method: 'post',
-        data // { address_id: 1 }
+        data // { address_id: 1, sku_ids: [1, 2] }
     })
 }
 

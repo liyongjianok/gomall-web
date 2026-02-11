@@ -13,7 +13,8 @@ const routes = [
     { path: '/home', component: Home },
     { path: '/products', component: ProductList },
     { path: '/product/:id', component: ProductDetail },
-    { path: '/cart', component: Cart }
+    { path: '/cart', component: Cart },
+    { path: '/orders', component: () => import('../views/OrderList.vue') }
 ]
 
 const router = createRouter({

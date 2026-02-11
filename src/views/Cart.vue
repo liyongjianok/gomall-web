@@ -303,33 +303,43 @@
   }
   
   const handleCreateOrder = async () => {
-    if (!selectedAddressId.value) return
-    
+  if (!selectedAddressId.value) return
+  
+  const skuIds = selectedItems.value.map(item => item.sku_id)
+    if (skuIds.length === 0) {
+      ElMessage.warning('请选择商品')
+      return
+    }
+  
     orderLoading.value = true
     try {
       const res = await createOrder({
-        address_id: Number(selectedAddressId.value)
+        address_id: Number(selectedAddressId.value),
+        sku_ids: skuIds
       })
       
-      if (res.code === 200) {
+      // 注意：这里要做健壮性判断，有的后端返回 code=0，有的是 200
+      if (res.code === 200 || res.code === 0 || res.data) {
         checkoutVisible.value = false
-        ElMessageBox.alert(
-          `订单号：${res.data.order_no}`, 
-          '下单成功 🎉', 
-          {
-            confirmButtonText: '继续',
-            callback: () => {
-              loadCart() // 刷新
-              selectedItems.value = [] 
-            }
+        
+        // 🔥🔥🔥 修复点：改用 ElMessageBox.alert 🔥🔥🔥
+        ElMessageBox.alert('订单已创建，请尽快支付', '下单成功', {
+          confirmButtonText: '去支付',
+          type: 'success', // 这里指定图标类型
+          callback: () => {
+            router.push('/orders') 
           }
-        )
+        })
+  
+        loadCart()
+        selectedItems.value = [] 
       } else {
          ElMessage.error(res.msg || '下单失败')
       }
     } catch (error) {
       console.error(error)
-      ElMessage.error('服务异常')
+      // 只有非 200 的状态码才会进这里，比如 500
+      ElMessage.error('服务异常: ' + (error.message || '未知错误'))
     } finally {
       orderLoading.value = false
     }
