@@ -1,7 +1,7 @@
 import request from '../utils/request'
 
 // 加入购物车
-export function addToCart(data) {
+export function addCartItem(data) {
     return request({
         url: '/cart/add',
         method: 'post',
@@ -17,7 +17,7 @@ export function getCartList() {
     })
 }
 
-// 新增：删除购物车商品 
+// 删除购物车商品 
 export function deleteCartItem(data) {
     return request({
         url: '/cart/delete',

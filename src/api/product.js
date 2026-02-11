@@ -18,11 +18,11 @@ export function getProductDetail(id) {
     })
 }
 
-// 秒杀抢购
+// 秒杀抢购接口 
 export function seckillProduct(skuId) {
     return request({
         url: '/product/seckill',
         method: 'post',
-        data: { sku_id: skuId }
+        data: { sku_id: Number(skuId) } // 确保转为数字，后端需要 int64
     })
 }
