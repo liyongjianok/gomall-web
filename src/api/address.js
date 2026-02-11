@@ -1,18 +1,17 @@
 import request from '../utils/request'
 
-// 获取地址列表
 export function getAddressList() {
-    return request({
-        url: '/address/list',
-        method: 'get'
-    })
+    return request({ url: '/address/list', method: 'get' })
 }
 
-// 新增地址
-export function addAddress(data) {
-    return request({
-        url: '/address/add',
-        method: 'post',
-        data // { name, mobile, province, city, district, detail_address }
-    })
+export function createAddress(data) {
+    return request({ url: '/address/create', method: 'post', data })
+}
+
+export function updateAddress(data) {
+    return request({ url: '/address/update', method: 'post', data })
+}
+
+export function deleteAddress(address_id) {
+    return request({ url: '/address/delete', method: 'post', data: { address_id } })
 }
