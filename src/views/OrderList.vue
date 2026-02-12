@@ -62,37 +62,42 @@
           <el-card v-for="order in list" :key="order.order_no" class="order-card" shadow="never">
             <div class="card-header">
               <div class="header-left">
-                <span class="order-time">{{ order.created_at }}</span>
-                <span class="order-no">订单号：{{ order.order_no }}</span>
+                <span class="order-time">{{ order.created_at || order.CreatedAt }}</span>
+                <span class="order-no">订单号：{{ order.order_no || order.OrderNo }}</span>
               </div>
               <div class="header-right">
-                <span class="status-text" :class="getStatusClass(order.status)">
-                  {{ getStatusText(order.status) }}
+                <span class="status-text" :class="getStatusClass(order.status || order.Status)">
+                  {{ getStatusText(order.status || order.Status) }}
                 </span>
               </div>
             </div>
 
             <div class="card-body">
               <div class="product-group">
-                <div v-for="item in order.items" :key="item.sku_id" class="product-row">
-                  <img :src="item.picture" class="thumb" />
+                <div v-for="item in (order.items || order.Items)" :key="item.sku_id || item.SkuId" class="product-row">
+                  <img :src="item.picture || item.Picture" class="thumb" />
                   <div class="info">
-                    <div class="name">{{ item.product_name }}</div>
-                    <div class="sku">{{ item.sku_name }}</div>
+                    <div class="name">{{ item.product_name || item.ProductName }}</div>
+                    <div class="sku">{{ item.sku_name || item.SkuName }}</div>
                   </div>
-                  <div class="unit-price">¥ {{ item.price }} x {{ item.quantity }}</div>
+                  <div class="unit-price">¥ {{ item.price || item.Price }} x {{ item.quantity || item.Quantity }}</div>
+                  
+                  <div class="item-action" v-if="(order.status || order.Status) === 1">
+                    <el-button v-if="item._reviewed" size="small" type="success" plain disabled>已评价</el-button>
+                    <el-button v-else size="small" type="primary" plain @click="openReviewDialog(order, item)">评价商品</el-button>
+                  </div>
                 </div>
               </div>
 
               <div class="action-column">
                 <div class="amount-info">
                   <span class="label">实付金额：</span>
-                  <span class="total-price">¥ {{ order.total_amount }}</span>
+                  <span class="total-price">¥ {{ order.total_amount || order.TotalAmount }}</span>
                 </div>
                 
                 <div class="btn-area">
                   <el-button 
-                    v-if="isUnpaid(order.status)" 
+                    v-if="isUnpaid(order.status || order.Status)" 
                     type="danger" 
                     class="pay-btn"
                     @click="handlePay(order)"
@@ -100,15 +105,14 @@
                     立即支付
                   </el-button>
                   <el-button 
-                    v-if="isUnpaid(order.status)" 
+                    v-if="isUnpaid(order.status || order.Status)" 
                     text 
                     @click="handleCancel(order)"
                   >
                     取消订单
                   </el-button>
                   
-                  <el-button v-if="order.status === 1" type="primary" plain size="small" @click="$router.push('/products')">再次购买</el-button>
-                  <el-button v-if="order.status === 2" type="info" plain size="small" disabled>已取消</el-button>
+                  <el-button v-if="(order.status || order.Status) === 1" type="info" plain size="small" @click="$router.push('/products')">再次购买</el-button>
                 </div>
               </div>
             </div>
@@ -116,15 +120,41 @@
         </div>
       </div>
     </div>
+
+    <el-dialog v-model="reviewDialogVisible" title="发表评价" width="500px">
+      <div class="review-form-header" v-if="currentReviewItem">
+        <img :src="currentReviewItem.picture || currentReviewItem.Picture" class="review-thumb" />
+        <span>{{ currentReviewItem.product_name || currentReviewItem.ProductName }}</span>
+      </div>
+      <el-form :model="reviewForm" label-width="80px" style="margin-top: 20px;">
+        <el-form-item label="商品评分">
+          <el-rate v-model="reviewForm.star" :colors="['#99A9BF', '#F7BA2A', '#FF9900']" show-text />
+        </el-form-item>
+        <el-form-item label="评价内容">
+          <el-input 
+            v-model="reviewForm.content" 
+            type="textarea" 
+            :rows="4" 
+            placeholder="商品满足你的期待吗？说说你的使用心得吧！"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="reviewDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitReview" :loading="submitReviewLoading">提交评价</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { getOrderList } from '../api/order'
 import { payOrder } from '../api/payment'
-// 🔥 引入 request 获取用户信息
+import { addReview, checkReviewStatus } from '../api/review' // 🔥 引入查询评价状态API
 import request from '../utils/request'
 import { ShoppingCart, ArrowDown } from '@element-plus/icons-vue' 
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -134,50 +164,129 @@ const list = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
 
-// 🔥 头像相关变量
+// 头像相关变量
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 const userAvatar = ref('')
+const userNickname = ref('') 
 
-// 判断是否为待支付 (兼容 undefined/null)
-const isUnpaid = (status) => {
-  return status === 0 || status === undefined || status === null
-}
+const reviewDialogVisible = ref(false)
+const submitReviewLoading = ref(false)
+const currentReviewItem = ref(null)
+const reviewForm = reactive({
+  order_no: '',
+  sku_id: '',
+  product_id: 0, // 传 0 给后端，后端网关会自动反查补全
+  content: '',
+  star: 5,
+  sku_name: ''
+})
+
+const isUnpaid = (status) => status === 0 || status === undefined || status === null
 
 const loadData = async () => {
   loading.value = true
   try {
     const res = await getOrderList()
     if (res.code === 200 || res.data) {
-      list.value = res.data.orders || res.data || []
+      list.value = res.data.orders || res.data.Orders || res.data || []
     }
   } catch (e) {
-    console.error(e)
     ElMessage.error('加载订单失败')
   } finally {
     loading.value = false
   }
 }
 
-// 🔥 获取用户信息（同步头像）
 const loadUserInfo = async () => {
   const token = localStorage.getItem('token')
   if (token) {
     try {
       const res = await request.get('/user/info')
       if (res.code === 200 && res.data) {
-        userAvatar.value = res.data.avatar
+        userAvatar.value = res.data.avatar || res.data.Avatar
+        userNickname.value = res.data.username || res.data.Username || '匿名用户'
       }
-    } catch (e) {
-      console.error('获取用户信息失败', e)
-    }
+    } catch (e) {}
   }
 }
 
-// 状态显示逻辑
+// 🔥 核心逻辑：点开弹窗前先查后端是否已评
+const openReviewDialog = async (order, item) => {
+  // 1. 极其暴力的 ID 提取逻辑，确保绝不为 0 或 undefined
+  // 优先取 sku_id，没有就取 SkuId，还没有就取 id
+  let sId = item.sku_id || item.SkuId || item.id 
+  
+  // 如果还是取不到，或者为 0，尝试从 ProductID 兜底 (有些老数据可能结构不一样)
+  if (!sId) sId = item.product_id || item.ProductId
+
+  const oNo = order.order_no || order.OrderNo || ''
+  
+  if (!sId || !oNo) {
+    console.error("数据缺失:", item, order)
+    return ElMessage.error('订单数据异常，无法评价')
+  }
+
+  // 2. 发起请求检查状态
+  try {
+    const res = await checkReviewStatus({ order_no: oNo, sku_id: Number(sId) })
+    // 只要后端返回了数据，且 has_reviewed 为 true，就拦截
+    if (res.data && (res.data.has_reviewed || res.data.HasReviewed)) {
+      item._reviewed = true 
+      return ElMessage.warning('您已经评价过该商品啦！')
+    }
+  } catch (e) {
+    // 这里的 catch 只捕获网络错误，不再捕获 404/500 (因为后端修好了)
+    console.error(e)
+    // 如果检查失败，不要阻断用户，允许他尝试点击弹窗，但在控制台记录
+  }
+
+  // 3. 正常打开弹窗
+  currentReviewItem.value = item
+  reviewForm.order_no = oNo
+  reviewForm.sku_id = Number(sId)
+  reviewForm.sku_name = item.sku_name || item.SkuName || '默认规格'
+  reviewForm.content = ''
+  reviewForm.star = 5
+  reviewDialogVisible.value = true
+}
+
+const submitReview = async () => {
+  if (!reviewForm.content.trim()) return ElMessage.warning('评价内容不能为空哦！')
+  
+  submitReviewLoading.value = true
+  try {
+    const res = await addReview({
+      ...reviewForm,
+      user_nickname: userNickname.value,
+      user_avatar: userAvatar.value || defaultAvatar
+    })
+    if (res.code === 200) {
+      ElMessage.success('🎉 评价成功！感谢您的反馈。')
+      reviewDialogVisible.value = false
+      // 🔥 提交成功后，本地更新状态，按钮变灰
+      if (currentReviewItem.value) {
+        currentReviewItem.value._reviewed = true
+      }
+    } else {
+      ElMessage.error(res.msg || '评价失败')
+    }
+  } catch (error) {
+    if (error.message && error.message.includes('已评价')) {
+      ElMessage.warning('您已经评价过该商品啦！')
+      reviewDialogVisible.value = false
+      if (currentReviewItem.value) currentReviewItem.value._reviewed = true
+    } else {
+      ElMessage.error('提交失败，请稍后再试')
+    }
+  } finally {
+    submitReviewLoading.value = false
+  }
+}
+
 const getStatusText = (s) => {
   const status = isUnpaid(s) ? 0 : Number(s)
   if (status === 0) return '待支付'
-  if (status === 1) return '已支付'
+  if (status === 1) return '已完成'
   if (status === 2) return '已取消'
   return '未知'
 }
@@ -190,189 +299,65 @@ const getStatusClass = (s) => {
   return ''
 }
 
-// 支付
 const handlePay = async (order) => {
   try {
-    await ElMessageBox.confirm(`确认支付订单 ¥${order.total_amount} 吗？`, '支付确认', {
-      confirmButtonText: '确定支付',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-    
-    await payOrder({ order_no: order.order_no, amount: order.total_amount })
+    await ElMessageBox.confirm(`确认支付订单 ¥${order.total_amount || order.TotalAmount} 吗？`, '支付确认', { type: 'warning' })
+    await payOrder({ order_no: order.order_no || order.OrderNo, amount: order.total_amount || order.TotalAmount })
     ElMessage.success('支付成功！')
     loadData()
-  } catch (e) {
-    if (e !== 'cancel') ElMessage.error('支付失败')
-  }
+  } catch (e) { if (e !== 'cancel') ElMessage.error('支付失败') }
 }
 
-// 取消 (暂未对接后端接口)
-const handleCancel = (order) => {
-  ElMessage.info('取消功能暂未开放')
-}
-
-// 顶部搜索 (跳转回首页搜索)
-const handleGlobalSearch = () => {
-  router.push({ path: '/products', query: { q: searchQuery.value } })
-}
-
-// 用户菜单
+const handleCancel = (order) => ElMessage.info('取消功能暂未开放')
+const handleGlobalSearch = () => router.push({ path: '/products', query: { q: searchQuery.value } })
 const handleUserCommand = (command) => {
-  if (command === 'logout') {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user_id')
-    router.push('/login')
-  } else if (command === 'home') {
-    router.push('/products')
-  } else if (command === 'profile') {
-    router.push('/user')
-  }
+  if (command === 'logout') { localStorage.clear(); router.push('/login') } 
+  else if (command === 'home') router.push('/products') 
+  else if (command === 'profile') router.push('/user')
 }
 
-onMounted(() => {
-  loadData()
-  loadUserInfo() // 🔥 加载头像
-})
+onMounted(() => { loadData(); loadUserInfo() })
 </script>
 
 <style>
-/* 全局样式覆盖 */
 body { margin: 0; background-color: #f5f7fa; }
 </style>
 
 <style scoped>
-/* ==================== 头部样式 (与首页完全一致) ==================== */
-.header-wrapper { 
-  background-color: white; 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-  width: 100%; 
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-.header-content { 
-  width: 1200px; 
-  margin: 0 auto; 
-  height: 60px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-}
-.logo { 
-  font-size: 22px; 
-  color: #409EFF; 
-  font-weight: bold; 
-  margin: 0; 
-  cursor: pointer;
-}
+/* 保持你的清爽样式 */
+.header-wrapper { background-color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.05); width: 100%; position: sticky; top: 0; z-index: 100;}
+.header-content { width: 1200px; margin: 0 auto; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.logo { font-size: 22px; color: #409EFF; font-weight: bold; margin: 0; cursor: pointer;}
 .search-box { width: 400px; }
 .user-info { display: flex; align-items: center; gap: 20px; }
 .cart-btn { font-size: 18px; border: none; background: #f0f2f5; color: #606266; }
-.cart-btn:hover { background: #e6e8eb; color: #409EFF; }
 .user-dropdown-link { display: flex; align-items: center; cursor: pointer; padding: 5px; }
 .username { margin: 0 8px; font-size: 14px; color: #606266; font-weight: 500; }
-
-/* ==================== 主内容区 (1200px 居中) ==================== */
-.main-wrapper { 
-  width: 1200px; 
-  margin: 30px auto; 
-  min-height: 500px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-.page-title {
-  margin-top: 15px;
-  font-size: 24px;
-  color: #303133;
-}
-
-/* ==================== 订单卡片样式 ==================== */
-.order-card {
-  margin-bottom: 20px;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-}
-
-/* 头部灰色背景 */
-.card-header {
-  background: #f5f7fa;
-  padding: 10px 20px;
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid #e4e7ed;
-  font-size: 13px;
-  color: #606266;
-}
+.main-wrapper { width: 1200px; margin: 30px auto; min-height: 500px;}
+.page-header { margin-bottom: 20px;}
+.page-title { margin-top: 15px; font-size: 24px; color: #303133;}
+.order-card { margin-bottom: 20px; border: 1px solid #e4e7ed; border-radius: 4px;}
+.card-header { background: #f5f7fa; padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #e4e7ed; font-size: 13px; color: #606266;}
 .header-left { display: flex; gap: 30px; }
 .order-no { color: #303133; }
 .status-text { font-weight: bold; font-size: 14px; }
-.text-warning { color: #e6a23c; } /* 待支付 */
-.text-success { color: #67c23a; } /* 已支付 */
-.text-info { color: #909399; }    /* 已取消 */
-
-/* 卡片内容区 */
-.card-body {
-  display: flex;
-  padding: 20px;
-}
-
-/* 左侧商品组 */
-.product-group {
-  flex: 1;
-  border-right: 1px solid #e4e7ed;
-  padding-right: 20px;
-}
-
-.product-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-.product-row:last-child { margin-bottom: 0; }
-
-.thumb {
-  width: 70px;
-  height: 70px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  margin-right: 15px;
-  object-fit: cover;
-}
+.text-warning { color: #e6a23c; } .text-success { color: #67c23a; } .text-info { color: #909399; }
+.card-body { display: flex; padding: 20px;}
+.product-group { flex: 1; border-right: 1px solid #e4e7ed; padding-right: 20px;}
+.product-row { display: flex; align-items: center; margin-bottom: 15px;}
+.thumb { width: 70px; height: 70px; border: 1px solid #eee; border-radius: 4px; margin-right: 15px; object-fit: cover;}
 .info { flex: 1; }
 .name { font-size: 14px; color: #303133; margin-bottom: 5px; }
 .sku { font-size: 12px; color: #909399; }
 .unit-price { width: 120px; text-align: right; color: #606266; font-size: 13px; }
-
-/* 右侧操作区 */
-.action-column {
-  width: 200px;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.amount-info {
-  margin-bottom: 15px;
-  text-align: center;
-}
+.item-action { width: 100px; text-align: right; margin-left: 20px; }
+.action-column { width: 200px; padding-left: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+.amount-info { margin-bottom: 15px; text-align: center;}
 .label { font-size: 12px; color: #909399; }
 .total-price { font-size: 18px; color: #f56c6c; font-weight: bold; display: block; margin-top: 5px; }
-
-.btn-area {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-}
+.btn-area { display: flex; flex-direction: column; gap: 10px; width: 100%;}
 .pay-btn { width: 100%; }
-
-/* 响应式适配 (防止小于1200px时错乱) */
-@media (max-width: 1220px) {
-  .header-content, .main-wrapper { width: 100%; padding: 0 20px; box-sizing: border-box; }
-}
+.review-form-header { display: flex; align-items: center; gap: 15px; padding: 10px; background: #f9fafc; border-radius: 4px; font-weight: bold; color: #333;}
+.review-thumb { width: 40px; height: 40px; border-radius: 4px; border: 1px solid #eee;}
+@media (max-width: 1220px) { .header-content, .main-wrapper { width: 100%; padding: 0 20px; box-sizing: border-box; } }
 </style>
