@@ -17,14 +17,7 @@
         </div>
         
         <div class="user-info">
-          <el-button 
-            :icon="ShoppingCart" 
-            circle 
-            size="large"
-            class="cart-btn"
-            @click="$router.push('/cart')"
-          />
-          
+          <el-button :icon="ShoppingCart" circle size="large" class="cart-btn" @click="$router.push('/cart')" />
           <el-dropdown @command="handleUserCommand">
             <div class="user-dropdown-link">
               <el-avatar :size="36" :src="userAvatar || defaultAvatar" />
@@ -154,7 +147,7 @@ import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { getOrderList } from '../api/order'
 import { payOrder } from '../api/payment'
-import { addReview, checkReviewStatus } from '../api/review' // 🔥 引入查询评价状态API
+import { addReview, checkReviewStatus } from '../api/review' 
 import request from '../utils/request'
 import { ShoppingCart, ArrowDown } from '@element-plus/icons-vue' 
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -164,7 +157,6 @@ const list = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
 
-// 头像相关变量
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 const userAvatar = ref('')
 const userNickname = ref('') 
@@ -175,7 +167,7 @@ const currentReviewItem = ref(null)
 const reviewForm = reactive({
   order_no: '',
   sku_id: '',
-  product_id: 0, // 传 0 给后端，后端网关会自动反查补全
+  product_id: 0, 
   content: '',
   star: 5,
   sku_name: ''
@@ -210,13 +202,9 @@ const loadUserInfo = async () => {
   }
 }
 
-// 🔥 核心逻辑：点开弹窗前先查后端是否已评
+// 打开评价弹窗 (Robust Version)
 const openReviewDialog = async (order, item) => {
-  // 1. 极其暴力的 ID 提取逻辑，确保绝不为 0 或 undefined
-  // 优先取 sku_id，没有就取 SkuId，还没有就取 id
   let sId = item.sku_id || item.SkuId || item.id 
-  
-  // 如果还是取不到，或者为 0，尝试从 ProductID 兜底 (有些老数据可能结构不一样)
   if (!sId) sId = item.product_id || item.ProductId
 
   const oNo = order.order_no || order.OrderNo || ''
@@ -226,25 +214,20 @@ const openReviewDialog = async (order, item) => {
     return ElMessage.error('订单数据异常，无法评价')
   }
 
-  // 2. 发起请求检查状态
   try {
     const res = await checkReviewStatus({ order_no: oNo, sku_id: Number(sId) })
-    // 只要后端返回了数据，且 has_reviewed 为 true，就拦截
     if (res.data && (res.data.has_reviewed || res.data.HasReviewed)) {
       item._reviewed = true 
       return ElMessage.warning('您已经评价过该商品啦！')
     }
   } catch (e) {
-    // 这里的 catch 只捕获网络错误，不再捕获 404/500 (因为后端修好了)
     console.error(e)
-    // 如果检查失败，不要阻断用户，允许他尝试点击弹窗，但在控制台记录
   }
 
-  // 3. 正常打开弹窗
   currentReviewItem.value = item
   reviewForm.order_no = oNo
   reviewForm.sku_id = Number(sId)
-  reviewForm.sku_name = item.sku_name || item.SkuName || '默认规格'
+  reviewForm.sku_name = item.sku_name || item.SkuName || item.skuName || '默认规格'
   reviewForm.content = ''
   reviewForm.star = 5
   reviewDialogVisible.value = true
@@ -252,7 +235,6 @@ const openReviewDialog = async (order, item) => {
 
 const submitReview = async () => {
   if (!reviewForm.content.trim()) return ElMessage.warning('评价内容不能为空哦！')
-  
   submitReviewLoading.value = true
   try {
     const res = await addReview({
@@ -263,10 +245,7 @@ const submitReview = async () => {
     if (res.code === 200) {
       ElMessage.success('🎉 评价成功！感谢您的反馈。')
       reviewDialogVisible.value = false
-      // 🔥 提交成功后，本地更新状态，按钮变灰
-      if (currentReviewItem.value) {
-        currentReviewItem.value._reviewed = true
-      }
+      if (currentReviewItem.value) currentReviewItem.value._reviewed = true
     } else {
       ElMessage.error(res.msg || '评价失败')
     }
@@ -301,7 +280,11 @@ const getStatusClass = (s) => {
 
 const handlePay = async (order) => {
   try {
-    await ElMessageBox.confirm(`确认支付订单 ¥${order.total_amount || order.TotalAmount} 吗？`, '支付确认', { type: 'warning' })
+    await ElMessageBox.confirm(`确认支付订单 ¥${order.total_amount || order.TotalAmount} 吗？`, '支付确认', {
+      confirmButtonText: '确定支付', // 🔥 明确的中文按钮
+      cancelButtonText: '取消',      // 🔥 明确的中文按钮
+      type: 'warning'
+    })
     await payOrder({ order_no: order.order_no || order.OrderNo, amount: order.total_amount || order.TotalAmount })
     ElMessage.success('支付成功！')
     loadData()
@@ -319,12 +302,7 @@ const handleUserCommand = (command) => {
 onMounted(() => { loadData(); loadUserInfo() })
 </script>
 
-<style>
-body { margin: 0; background-color: #f5f7fa; }
-</style>
-
 <style scoped>
-/* 保持你的清爽样式 */
 .header-wrapper { background-color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.05); width: 100%; position: sticky; top: 0; z-index: 100;}
 .header-content { width: 1200px; margin: 0 auto; height: 60px; display: flex; align-items: center; justify-content: space-between; }
 .logo { font-size: 22px; color: #409EFF; font-weight: bold; margin: 0; cursor: pointer;}
