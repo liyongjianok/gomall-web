@@ -14,6 +14,10 @@ export function toggleUserStatus(data) {
     return request({ url: '/admin/user/toggle', method: 'post', data })
 }
 
+export function deleteAdminUser(id) {
+    return request({ url: `/admin/user/${id}`, method: 'delete' })
+}
+
 // 3. 商品管理
 export function getAdminProductList(params) {
     return request({ url: '/admin/products', method: 'get', params })
