@@ -15,3 +15,7 @@ export function updateAddress(data) {
 export function deleteAddress(address_id) {
     return request({ url: '/address/delete', method: 'post', data: { address_id } })
 }
+
+export function setDefaultAddress(address_id) {
+    return request({ url: '/address/set_default', method: 'post', data: { address_id } })
+}
