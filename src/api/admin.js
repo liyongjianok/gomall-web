@@ -1,8 +1,8 @@
 import request from '../utils/request'
 
 // 1. 获取仪表盘统计
-export function getStats() {
-    return request({ url: '/admin/stats', method: 'get' })
+export function getDashboardData() {
+    return request({ url: '/admin/dashboard/stats', method: 'get' })
 }
 
 // 2. 用户管理
@@ -31,3 +31,4 @@ export function updateAdminProduct(data) {
 export function shipOrder(order_no) {
     return request({ url: '/admin/order/ship', method: 'post', data: { order_no } })
 }
+
