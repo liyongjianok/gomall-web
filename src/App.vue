@@ -1,6 +1,8 @@
 <template>
-  <el-config-provider :locale="zhCn" tag="template">
-    <router-view />
+  <el-config-provider :locale="zhCn">
+    <div class="main-app-container">
+      <router-view />
+    </div>
   </el-config-provider>
 </template>
 
@@ -10,25 +12,33 @@ import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 </script>
 
 <style>
-/* 1. 只处理最基础的边距，不去控制 flex 或高度，完全交给具体页面 */
 html, body {
   margin: 0 !important;
   padding: 0 !important;
   background-color: #f5f7fa;
 }
 
-/* 2. 链接全局样式 */
+#app {
+  /* 确保根节点占满全屏，并且内部子元素可以居中 */
+  width: 100%;
+  min-height: 100vh;
+}
+
+.main-app-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 保证子元素在水平方向居中 */
+}
+
+/* 链接全局样式 */
 a {
   text-decoration: none;
   color: inherit;
 }
 
-/* 3. 基础滚动条美化 */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
+/* 统一盒模型 */
+* {
+  box-sizing: border-box;
 }
 </style>
