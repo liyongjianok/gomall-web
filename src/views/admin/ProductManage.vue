@@ -16,17 +16,30 @@
 
       <el-form :inline="true" class="search-bar">
         <el-form-item label="蔬菜名称">
-          <el-input v-model="searchText" placeholder="搜索品名..." clearable @clear="fetchData" />
+          <el-input 
+            v-model="searchText" 
+            placeholder="搜索品名..." 
+            clearable 
+            @keyup.enter="fetchData"
+            @clear="fetchData" 
+          />
         </el-form-item>
         <el-form-item label="蔬菜分类">
-          <el-select v-model="filterCategory" placeholder="全部分类" clearable style="width: 150px">
+          <el-select 
+            v-model="filterCategory" 
+            placeholder="全部分类" 
+            clearable 
+            style="width: 150px"
+            @change="fetchData"
+          >
             <el-option v-for="cat in categories" :key="cat" :label="cat" :value="cat" />
           </el-select>
         </el-form-item>
-        <el-tag type="info" class="count-tag">当前筛选: {{ filteredList.length }} 种</el-tag>
+        <el-button type="primary" icon="Search" @click="fetchData">查询</el-button>
+        <el-tag type="info" class="count-tag">共记录: {{ productList.length }} 种</el-tag>
       </el-form>
 
-      <el-table :data="filteredList" v-loading="loading" border stripe height="580px">
+      <el-table :data="productList" v-loading="loading" border stripe height="580px">
         <el-table-column prop="id" label="ID" width="70" align="center" />
         <el-table-column label="蔬菜图片" width="100" align="center">
           <template #default="scope">
@@ -41,7 +54,7 @@
         </el-table-column>
         <el-table-column prop="price" label="当前单价" width="120" sortable>
           <template #default="scope">
-            <span class="price-text">￥{{ scope.row.price.toFixed(2) }}</span>
+            <span class="price-text">￥{{ scope.row.price ? scope.row.price.toFixed(2) : '0.00' }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="stock" label="库存量" width="120" sortable>
@@ -100,8 +113,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue'
-import { Goods } from '@element-plus/icons-vue'
+import { ref, onMounted, reactive } from 'vue'
+import { Goods, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
 
@@ -122,23 +135,23 @@ const showBatchDialog = ref(false)
 const batchLoading = ref(false)
 const batchForm = reactive({ category: '', ratio: 1.0 })
 
-// ✅ 计算属性实现前端即时过滤
-const filteredList = computed(() => {
-  return productList.value.filter(item => {
-    const matchName = item.name.toLowerCase().includes(searchText.value.toLowerCase())
-    const matchCat = filterCategory.value ? item.category === filterCategory.value : true
-    return matchName && matchCat
-  })
-})
-
+// 🚀 核心：从后端获取数据
 const fetchData = async () => {
   loading.value = true
   try {
-    const res = await request.get('/admin/products', { params: { page: 1, page_size: 100 } })
+    const params = {
+      page: 1,
+      page_size: 100,
+      // 这里的键名必须与 Gateway 接收的参数名一致
+      category: filterCategory.value 
+    }
+    // 发起请求
+    const res = await request.get('/admin/products', { params })
     if (res.code === 200) {
       productList.value = res.data.products || []
     }
   } catch (err) {
+    console.error("Fetch Error:", err)
     ElMessage.error('获取商品列表失败')
   } finally {
     loading.value = false
